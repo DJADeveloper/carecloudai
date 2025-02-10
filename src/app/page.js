@@ -1,38 +1,28 @@
-"use client"
-// pages/index.js
-import { useEffect, useState } from "react";
-import { supabase } from "./lib/supabase";
-import Link from "next/link";
+// src/app/page.js
+"use client";
 
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import Link from "next/link";
+import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { supabase } from "./lib/supabase";
+import LoginPage from "./login/page";
 
 export default function Home() {
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const { user, loading } = useCurrentUser();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Get current session on load
+  // Redirect to dashboard if user is logged in
   useEffect(() => {
-    async function getSession() {
-      const { data: { session } } = await supabase.auth.getSession();
-      setUser(session?.user ?? null);
-      setLoading(false);
+    if (!loading && user) {
+      router.push("/dashboard");
     }
-    getSession();
-
-    const { data: authListener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
-    });
-    return () => {
-      authListener.subscription.unsubscribe();
-    };
-  }, []);
+  }, [user, loading, router]);
 
   const signIn = async () => {
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       alert("Error signing in: " + error.message);
     }
@@ -40,7 +30,6 @@ export default function Home() {
 
   const signOut = async () => {
     await supabase.auth.signOut();
-    setUser(null);
   };
 
   if (loading) return <div>Loading...</div>;
@@ -48,35 +37,28 @@ export default function Home() {
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
       <h1>CareCloud AI MVP</h1>
-      {user ? (
-        <>
+      {!user && (
+        <LoginPage />
+      )}
+      {user && (
+        <div>
           <p>Welcome, {user.email}</p>
           <button onClick={signOut}>Sign Out</button>
-          <br /><br />
-          <Link href="./dashboard">Go to Dashboard</Link>
-
-        </>
-      ) : (
-        <>
           <div>
-            <input
-              type="email"
-              placeholder="Email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{ marginRight: "1rem" }}
-            />
-            <input
-              type="password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              style={{ marginRight: "1rem" }}
-            />
-            <button onClick={signIn}>Sign In</button>
+            <h2>Select Dashboard (Development Only)</h2>
+            <ul>
+              <li>
+                <Link href="/dashboard/admin">Admin Dashboard</Link>
+              </li>
+              <li>
+                <Link href="/dashboard/staff">Staff Dashboard</Link>
+              </li>
+              <li>
+                <Link href="/dashboard/family">Family Dashboard</Link>
+              </li>
+            </ul>
           </div>
-          <p>Or sign up using Supabase's authentication (set that up in your Supabase dashboard).</p>
-        </>
+        </div>
       )}
     </div>
   );
