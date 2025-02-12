@@ -2,8 +2,8 @@
 
 import React, { useState } from "react";
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
+import { FaPlus, FaEdit, FaTrash, FaTimes } from "react-icons/fa";
 
 // Lazy load your form components
 const StaffForm = dynamic(() => import("./forms/StaffForm"), {
@@ -12,30 +12,44 @@ const StaffForm = dynamic(() => import("./forms/StaffForm"), {
 const ResidentForm = dynamic(() => import("./forms/ResidentForm"), {
   loading: () => <h1>Loading...</h1>,
 });
-// Other form components can be added similarly
+const EventForm = dynamic(() => import("./forms/EventForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const MedicationTrackingForm = dynamic(() => import("./forms/MedicationTrackingForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
+const IncidentLoggingForm = dynamic(() => import("./forms/IncidentLoggingForm"), {
+  loading: () => <h1>Loading...</h1>,
+});
 
 // Map of forms to render based on the table
 const forms = {
   staff: (setOpen, type, data, relatedData) => (
-    <StaffForm
-      type={type}
-      data={data}
-      setOpen={setOpen}
-      relatedData={relatedData}
-    />
+    <StaffForm type={type} data={data} setOpen={setOpen} relatedData={relatedData} />
   ),
   resident: (setOpen, type, data, relatedData) => (
-    <ResidentForm
-      type={type}
-      data={data}
-      setOpen={setOpen}
-      relatedData={relatedData}
-    />
+    <ResidentForm type={type} data={data} setOpen={setOpen} relatedData={relatedData} />
   ),
-  // Additional forms (family, room, etc.) can be added here.
+  event: (setOpen, type, data, relatedData) => (
+    <EventForm type={type} data={data} setOpen={setOpen} relatedData={relatedData} />
+  ),
+  medication: (setOpen, type, data, relatedData) => (
+    <MedicationTrackingForm type={type} data={data} setOpen={setOpen} relatedData={relatedData} />
+  ),
+  incident: (setOpen, type, data, relatedData) => (
+    <IncidentLoggingForm type={type} data={data} setOpen={setOpen} relatedData={relatedData} />
+  ),
+  // Add more as needed
 };
 
-const FormModal = ({ table, type, data, id, relatedData }) =>{
+// Map of form types to icons
+const iconMap = {
+  create: <FaPlus size={16} />,
+  update: <FaEdit size={16} />,
+  delete: <FaTrash size={16} />,
+};
+
+const FormModal = ({ table, type, data, id, relatedData }) => {
   const size = type === "create" ? "w-8 h-8" : "w-7 h-7";
   const bgColor =
     type === "create"
@@ -47,19 +61,14 @@ const FormModal = ({ table, type, data, id, relatedData }) =>{
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
-  // Removed router.refresh() to avoid unnecessary re-mounts.
-
   // Choose the correct form component based on the table.
   const Form = () => {
     const formComponent = forms[table];
-
     if (!formComponent) {
       console.error(`Form not found for table: "${table}"`);
       return <div>Form not found!</div>;
     }
-
-    // For deletion, render a simple confirmation form.
-    // (Ensure that deleteActionMap is defined if you plan to use deletion)
+    // For deletion, render a simple confirmation form. (Assuming deleteActionMap is defined elsewhere.)
     return type === "delete" && id ? (
       <form
         action={deleteActionMap[table]}
@@ -87,7 +96,7 @@ const FormModal = ({ table, type, data, id, relatedData }) =>{
         className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
         onClick={() => setOpen(true)}
       >
-        <Image src={`/${type}.png`} alt={`${type} icon`} width={16} height={16} />
+        {iconMap[type] || <FaEdit size={16} />}
       </button>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">
@@ -97,13 +106,15 @@ const FormModal = ({ table, type, data, id, relatedData }) =>{
               className="absolute top-4 right-4 cursor-pointer"
               onClick={() => setOpen(false)}
             >
-              <Image src="/close.png" alt="Close" width={14} height={14} />
+              <button className="p-2 bg-gray-500 text-white rounded hover:bg-gray-600">
+                <FaTimes size={20} title="Close" />
+              </button>
             </div>
           </div>
         </div>
       )}
     </>
   );
-}
+};
 
 export default React.memo(FormModal);

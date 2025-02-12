@@ -5,6 +5,7 @@ import React from "react";
 import UserCard from "@/components/UserCard";
 import CountChartContainer from "@/components/CountChartContainer"; // assume available
 import ResidentListPage from "@/app/dashboard/list/residents/page";
+import EventCalendarContainer from "../EventCalendarContainer";
 
 export default function AdminPage({ searchParams }) {
   const allowedUserCards = ["admin", "staff", "resident", "family"];
@@ -45,7 +46,7 @@ export default function AdminPage({ searchParams }) {
       {/* RIGHT COLUMN */}
       <div className="w-full lg:w-1/3 flex flex-col gap-8">
         {/* Optionally include event calendar or announcements */}
-        {/* <EventCalendarContainer searchParams={searchParams} /> */}
+        <EventCalendarContainer searchParams={searchParams} />
       </div>
     </div>
   );

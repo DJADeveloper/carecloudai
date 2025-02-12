@@ -1,8 +1,7 @@
-// src/components/UserCard.jsx
 "use client";
 
+import React, { useState, useEffect } from "react";
 import { supabase } from "@/app/lib/supabase";
-import { useState, useEffect } from "react";
 import { FiMoreVertical } from "react-icons/fi";
 
 const UserCard = ({ type }) => {
@@ -11,13 +10,27 @@ const UserCard = ({ type }) => {
   useEffect(() => {
     async function fetchCount() {
       let result;
-      // For "resident", use the residents table; for others, use the users table.
+      // Query the appropriate table based on the type:
       if (type === "resident") {
         result = await supabase
           .from("residents")
           .select("*", { count: "exact", head: true });
+      } else if (type === "staff") {
+        result = await supabase
+          .from("staff")
+          .select("*", { count: "exact", head: true });
+      } else if (type === "family") {
+        result = await supabase
+          .from("family")
+          .select("*", { count: "exact", head: true });
+      } else if (type === "admin") {
+        // Assume admin records are in the staff table with role "ADMIN"
+        result = await supabase
+          .from("staff")
+          .select("*", { count: "exact", head: true })
+          .eq("role", "ADMIN");
       } else {
-        // Assume type is provided in lower-case and convert to uppercase for role
+        // Fallback: try to query a "users" table by role (if applicable)
         const role = type.toUpperCase();
         result = await supabase
           .from("users")
