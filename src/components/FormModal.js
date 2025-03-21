@@ -96,7 +96,7 @@ const FormModal = ({ table, type, data, id, relatedData }) => {
         className={`${size} flex items-center justify-center rounded-full ${bgColor}`}
         onClick={() => setOpen(true)}
       >
-        {iconMap[type] || <FaEdit size={16} />}
+        { iconMap[type] || <FaEdit size={16} />}
       </button>
       {open && (
         <div className="fixed inset-0 bg-black bg-opacity-60 z-50 flex items-center justify-center">

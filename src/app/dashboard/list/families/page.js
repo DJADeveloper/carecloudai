@@ -9,9 +9,10 @@ import Table from "@/components/Table";
 import TableSearch from "@/components/TableSearch";
 import { supabase } from "@/app/lib/supabase";
 import { ITEM_PER_PAGE } from "@/app/lib/settings";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/context/UserContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
 
-export default function FamilyListPage() {
+function FamiliesContent() {
   const searchParams = useSearchParams();
   const { user, loading: authLoading } = useCurrentUser();
   const [data, setData] = useState([]);
@@ -155,5 +156,13 @@ export default function FamilyListPage() {
       {/* PAGINATION */}
       <Pagination page={page} count={count} />
     </div>
+  );
+}
+
+export default function FamilyListPage() {
+  return (
+    <ProtectedRoute allowedRoles={['admin', 'staff']}>
+      <FamiliesContent />
+    </ProtectedRoute>
   );
 }

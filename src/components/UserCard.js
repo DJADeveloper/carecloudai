@@ -1,63 +1,52 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { supabase } from "@/app/lib/supabase";
-import { FiMoreVertical } from "react-icons/fi";
 
-const UserCard = ({ type }) => {
+/**
+ * A simpler UserCard that fetches a single count from one specified table.
+ * Example usage: <UserCard label="Residents" table="residents" />
+ *
+ * If you need multiple queries (e.g., staff with role=ADMIN, or a 'family' table),
+ * either create more specialized components or pass a query filter.
+ */
+export default function UserCard({ label, table, filter = {} }) {
   const [count, setCount] = useState(0);
+  const [errorMsg, setErrorMsg] = useState("");
 
   useEffect(() => {
     async function fetchCount() {
-      let result;
-      // Query the appropriate table based on the type:
-      if (type === "resident") {
-        result = await supabase
-          .from("residents")
-          .select("*", { count: "exact", head: true });
-      } else if (type === "staff") {
-        result = await supabase
-          .from("staff")
-          .select("*", { count: "exact", head: true });
-      } else if (type === "family") {
-        result = await supabase
-          .from("family")
-          .select("*", { count: "exact", head: true });
-      } else if (type === "admin") {
-        // Assume admin records are in the staff table with role "ADMIN"
-        result = await supabase
-          .from("staff")
-          .select("*", { count: "exact", head: true })
-          .eq("role", "ADMIN");
+      // Start building the query for 'head: true' (metadata only) with 'count: exact'
+      let query = supabase.from(table).select("*", { count: "exact", head: true });
+
+      // If a filter object is provided, apply it
+      // e.g., filter = { role: "ADMIN" }
+      Object.entries(filter).forEach(([key, value]) => {
+        query = query.eq(key, value);
+      });
+
+      const { error, count: c } = await query;
+      if (error) {
+        setErrorMsg(error.message);
+        console.error(`Error fetching count for table '${table}':`, error.message);
       } else {
-        // Fallback: try to query a "users" table by role (if applicable)
-        const role = type.toUpperCase();
-        result = await supabase
-          .from("users")
-          .select("*", { count: "exact", head: true })
-          .eq("role", role);
-      }
-      if (result.error) {
-        console.error(`Error fetching count for ${type}:`, result.error.message);
-      } else {
-        setCount(result.count || 0);
+        setCount(c || 0);
       }
     }
+
     fetchCount();
-  }, [type]);
+  }, [table, filter]);
 
   return (
-    <div className="rounded-2xl odd:bg-lamaPurple even:bg-lamaYellow p-4 flex-1 min-w-[130px]">
-      <div className="flex justify-between items-center">
-        <span className="text-[10px] bg-white px-2 py-1 rounded-full text-green-600">
-          2024/25
-        </span>
-        <FiMoreVertical size={20} />
-      </div>
-      <h1 className="text-2xl font-semibold my-4">{count}</h1>
-      <h2 className="capitalize text-sm font-medium text-gray-500">{type}s</h2>
+    <div className="bg-white rounded shadow p-4 flex flex-col items-center justify-center min-w-[150px]">
+      {errorMsg ? (
+        <p className="text-red-500 text-sm">{errorMsg}</p>
+      ) : (
+        <>
+          <h1 className="text-2xl font-semibold text-gray-800">{count}</h1>
+          <p className="text-sm text-gray-500">{label} Count</p>
+        </>
+      )}
     </div>
   );
-};
-
-export default UserCard;
+}

@@ -1,24 +1,24 @@
 "use client";
 
-import Image from "next/image";
 import { RadialBarChart, RadialBar, ResponsiveContainer } from "recharts";
 
-const CountChart = ({ boys, girls }) => {
+const CountChart = ({ low, medium, high }) => {
+  // Build up the chart data from the props
   const data = [
     {
-      name: "Total",
-      count: boys + girls,
-      fill: "white",
+      name: "Low",
+      count: low,
+      fill: "#C3EBFA",   // Example color for "Low"
     },
     {
-      name: "Girls",
-      count: girls,
-      fill: "#FAE27C",
+      name: "Medium",
+      count: medium,
+      fill: "#FAE27C",   // Example color for "Medium"
     },
     {
-      name: "Boys",
-      count: boys,
-      fill: "#C3EBFA",
+      name: "High",
+      count: high,
+      fill: "#FCA5A5",   // Example color for "High" (light red)
     },
   ];
 
@@ -36,13 +36,19 @@ const CountChart = ({ boys, girls }) => {
           <RadialBar background dataKey="count" />
         </RadialBarChart>
       </ResponsiveContainer>
-      <Image
-        src="/maleFemale.png"
-        alt=""
-        width={50}
-        height={50}
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
-      />
+
+      {/* 
+        If you want an icon in the center, place it here. 
+        Otherwise, remove this block entirely. For example:
+      
+        <Image
+          src="/someCenterIcon.png"
+          alt=""
+          width={50}
+          height={50}
+          className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2"
+        />
+      */}
     </div>
   );
 };

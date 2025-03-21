@@ -1,9 +1,8 @@
-// /lib/actions/Resident.js
 import { supabase } from "@/app/lib/supabase";
 
 /**
  * Create a new resident record.
- * @param {Object} residentData - The resident data object to insert.
+ * @param {Object} residentData - The resident data to insert.
  * @returns {Promise<{data: any, error: any}>}
  */
 export async function createResident(residentData) {
@@ -29,17 +28,42 @@ export async function getResident(id) {
 
 /**
  * List residents with optional filters and pagination.
- * @param {Object} [filters={}] - Filter criteria using match.
- * @param {Object} [range={ start: 0, end: 9 }] - Range for pagination.
+ * @param {Object} [filters={}] - Filter criteria (e.g., { carelevel: 'HIGH' }).
+ * @param {Object} [range={ start: 0, end: 9 }] - Pagination range.
  * @returns {Promise<{data: any, count: number, error: any}>}
  */
 export async function listResidents(filters = {}, range = { start: 0, end: 9 }) {
-  const { data, error, count } = await supabase
-    .from("residents")
-    .select("*", { count: "exact" })
-    .match(filters)
-    .range(range.start, range.end);
-  return { data, count, error };
+  try {
+    // Build the query with count
+    let query = supabase
+      .from("residents")
+      .select("*", { count: "exact" });
+    
+    // Apply filters if provided
+    if (Object.keys(filters).length > 0) {
+      query = query.match(filters);
+    }
+    
+    // Apply range for pagination
+    query = query.range(range.start, range.end);
+    
+    // Optionally, add a timeout to prevent hanging queries
+    const timeoutPromise = new Promise((_, reject) =>
+      setTimeout(() => reject(new Error("Query timeout")), 5000)
+    );
+    
+    // Race between query and timeout
+    const { data, error, count } = await Promise.race([query, timeoutPromise]);
+    
+    if (error) {
+      throw error;
+    }
+    
+    return { data: data || [], error: null, count: count || 0 };
+  } catch (error) {
+    console.error("Error listing residents:", error);
+    return { data: null, error: error, count: 0 };
+  }
 }
 
 /**

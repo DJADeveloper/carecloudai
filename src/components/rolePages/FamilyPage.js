@@ -1,61 +1,64 @@
-// src/app/dashboard/family/page.js
 "use client";
-// import Announcements from "@/components/Announcements";
-// import BigCalendarContainer from "@/components/BigCalendarContainer";
-import { useEffect, useState } from "react";
-import { supabase } from "@/app/lib/supabase";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
 
+import React, { useState, useEffect } from "react";
+import UserCard from "@/components/UserCard";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
+import RecentActivity from "@/components/RecentActivity";
+import { FiMoreVertical } from "react-icons/fi";
+import AlertsBanner from "@/components/AlertsBanner";
+import ChatWithUsers from "../Chat";
 
-export default function FamilyPage() {
-  const { user, loading: authLoading } = useCurrentUser();
-  const [residents, setResidents] = useState([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    async function fetchResidents() {
-      if (user) {
-        // Assuming your residents table has a column named "familyid" (lower-case)
-        const { data, error } = await supabase
-          .from("residents")
-          .select("*")
-          .eq("familyid", user.id);
-        if (error) {
-          console.error("Error fetching residents:", error.message);
-        } else {
-          setResidents(data);
-        }
-      }
-      setLoading(false);
-    }
-    fetchResidents();
-  }, [user]);
-
-  if (authLoading || loading) return <div>Loading...</div>;
-
+export default function FamilyDashboard({ searchParams }) {
   return (
-    
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT */}
-      <div className="w-full xl:w-2/3 flex flex-col gap-4">
-        {residents.length > 0 ? (
-          residents.map((resident) => (
-            <div className="h-full bg-white p-4 rounded-md" key={resident.id}>
-              <h1 className="text-xl font-semibold">
-                Schedule ({resident.fullname || resident.fullName})
-              </h1>
-              {/* <BigCalendarContainer type="roomId" id={resident.roomid || resident.roomId} /> */}
-            </div>
-          ))
-        ) : (
-          <p>No residents found for your family account.</p>
-        )}
+    <div className="bg-gray-50 min-h-screen p-6">
+      {/* Alerts */}
+      <AlertsBanner />
+
+      {/* Resident Overview */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="md:col-span-2 bg-white rounded shadow p-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">My Loved Ones</h2>
+          <UserCard type="resident" />
+        </div>
+        <div className="bg-white rounded shadow p-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Facility Updates</h2>
+          <RecentActivity />
+        </div>
       </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        {/* <Announcements /> */}
+
+      {/* Upcoming Events & Schedule */}
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Upcoming Visits & Events</h2>
+        <EventCalendarContainer searchParams={searchParams} />
+      </div>
+
+      {/* Document Center */}
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">Resident Care Documents</h2>
+        <p className="text-sm text-gray-500">Access medical updates, care plans, and shared files.</p>
+        {/* Placeholder for document list */}
+        <ul className="mt-2 space-y-2">
+          <li className="text-sm text-blue-500 cursor-pointer hover:underline">Care Plan - John Doe.pdf</li>
+          <li className="text-sm text-blue-500 cursor-pointer hover:underline">Medication Schedule.pdf</li>
+        </ul>
+      </div>
+
+      {/* Communication */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Recent Activity</h2>
+          <RecentActivity />
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Messages</h2>
+          <p className="text-sm text-gray-500">Chat with staff or administration about your loved one’s care.</p>
+          {/* Placeholder for message interface */}
+          <div className="mt-4 p-3 bg-gray-100 rounded text-sm text-gray-700">
+            No new messages.
+            {/* <ChatWithUsers /> */}
+          </div>
+        </div>
       </div>
     </div>
-    
   );
 }

@@ -1,25 +1,22 @@
-// src/app/page.js
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState } from "react";
 import Link from "next/link";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/context/UserContext";
 import { supabase } from "./lib/supabase";
 import LoginPage from "./login/page";
 
 export default function Home() {
   const { user, loading } = useCurrentUser();
-  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Redirect to dashboard if user is logged in
-  useEffect(() => {
-    if (!loading && user) {
-      router.push("/dashboard");
-    }
-  }, [user, loading, router]);
+  // We have removed the automatic redirect. So this effect is commented out:
+  // useEffect(() => {
+  //   if (!loading && user) {
+  //     router.push("/dashboard");
+  //   }
+  // }, [user, loading, router]);
 
   const signIn = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
@@ -28,22 +25,38 @@ export default function Home() {
     }
   };
 
-  const signOut = async () => {
-    await supabase.auth.signOut();
-  };
+  // const signOut = async () => {
+  //   await supabase.auth.signOut();
+  // };
 
-  if (loading) return <div>Loading...</div>;
+  console.log("User:", user);
+  console.log("Loading:", loading);
+
+  if (loading) {
+    return <div>Loading user session...</div>;
+  }
 
   return (
     <div style={{ padding: "2rem", fontFamily: "sans-serif" }}>
       <h1>CareCloud AI MVP</h1>
-      {!user && (
-        <LoginPage />
-      )}
-      {user && (
+      {!user ? (
+        <>
+          <LoginPage />
+        </>
+      ) : (
         <div>
-          <p>Welcome, {user.email}</p>
-          <button onClick={signOut}>Sign Out</button>
+          <p style={{ marginBottom: "1rem" }}>
+            <strong>User Signed In:</strong> {user.email}
+            <br />
+            <span style={{ fontSize: "0.85rem", color: "#555" }}>
+              <strong>User ID:</strong> {user.id}
+            </span>
+          </p>
+
+          {/* <button onClick={signOut} style={{ marginBottom: "1rem" }}> */}
+          <button style={{ marginBottom: "1rem" }}>
+            Sign Out
+          </button>
           <div>
             <h2>Select Dashboard (Development Only)</h2>
             <ul>

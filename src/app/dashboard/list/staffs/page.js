@@ -11,6 +11,7 @@ import FormModal from "@/components/FormModal";
 import { ITEM_PER_PAGE } from "@/app/lib/settings";
 import { FaFilter, FaSort, FaEye, FaUser } from "react-icons/fa";
 import Link from "next/link";
+import DashboardLayout from "@/components/DashboardLayout";
 
 export default function StaffListPage() {
   const [data, setData] = React.useState([]);
@@ -125,6 +126,7 @@ export default function StaffListPage() {
   if (loading) return <div className="p-4">Loading Staff...</div>;
 
   return (
+    
     <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
       {/* Top bar: search and filter controls */}
       <div className="flex items-center justify-between">
@@ -146,7 +148,6 @@ export default function StaffListPage() {
       </div>
       <Table columns={columns} renderRow={renderRow} data={data} />
       <Pagination page={pageParam} count={count} />
-      <FormModal />
     </div>
   );
 }

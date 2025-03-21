@@ -7,8 +7,8 @@ import StaffPage from "@/components/rolePages/StaffPage";
 
 export default function StaffDashboard() {
   return (
-    <DashboardLayout>
+    <>
       <StaffPage />
-    </DashboardLayout>
+    </>
   );
 }

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import FormModal from "@/components/FormModal";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/context/UserContext";
 import { supabase } from "@/app/lib/supabase";
 
 const FormContainer =({ table, type, data, id }) =>{

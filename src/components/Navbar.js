@@ -1,16 +1,23 @@
 "use client";
 
 import { supabase } from "@/app/lib/supabase";
-import { useCurrentUser } from "@/hooks/useCurrentUser";
-
+import { useCurrentUser } from "@/context/UserContext";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { FaSearch, FaEnvelope, FaBell, FaSignOutAlt } from "react-icons/fa";
 
 export default function Navbar() {
   const { user, loading } = useCurrentUser();
+  const router = useRouter();
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    try {
+      const { error } = await supabase.auth.signOut();
+      if (error) throw error;
+      router.push('/login'); // Redirect to login page after successful sign out
+    } catch (error) {
+      console.error('Error signing out:', error);
+    }
   };
 
   return (
@@ -46,7 +53,7 @@ export default function Navbar() {
         {user && (
           <button
             onClick={handleSignOut}
-            className="bg-red-500 text-white px-2 py-1 rounded flex items-center gap-1"
+            className="bg-red-500 text-white px-2 py-1 rounded flex items-center gap-1 hover:bg-red-600 transition-colors"
           >
             <FaSignOutAlt size={14} />
             <span className="hidden md:inline">Sign Out</span>

@@ -37,17 +37,19 @@ function MedicationTrackingForm({ type, data, setOpen, relatedData = {} }) {
   // Handle input changes. Convert empty values for timestamp fields to null.
   const handleChange = useCallback((e) => {
     const { name, value } = e.target;
-    let newValue = value;
-    // For residentid: if empty, set to null.
-    if ((name === "residentid") && value === "") {
-      newValue = null;
-    }
-    // For fields expecting a timestamp, convert empty string to null.
-    if ((name === "schedule" || name === "administered_at") && value === "") {
-      newValue = null;
-    }
-    setMedicationData((prev) => ({ ...prev, [name]: newValue }));
-  }, []);
+    setMedicationData((prev) => {
+      let newValue = value;
+      // For residentid: if empty, set to null.
+      if ((name === "residentid") && value === "") {
+        newValue = null;
+      }
+      // For fields expecting a timestamp, convert empty string to null.
+      if ((name === "schedule" || name === "administered_at") && value === "") {
+        newValue = null;
+      }
+      return { ...prev, [name]: newValue };
+    });
+  }, []); // Empty dependency array since we're using the function updater form of setState
 
   const handleSubmit = async (e) => {
     e.preventDefault();

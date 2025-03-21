@@ -1,6 +1,6 @@
 "use client";
 
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import { useCurrentUser } from "@/context/UserContext";
 import Link from "next/link";
 import {
   FaHome,
@@ -11,6 +11,7 @@ import {
   FaHospitalUser,
   FaBell,
   FaSignOutAlt,
+  FaFacebookMessenger,
 } from "react-icons/fa";
 
 const menuItems = [
@@ -65,6 +66,12 @@ const menuItems = [
         href: "/dashboard/list/events",
         visible: ["admin", "staff", "family", "resident"],
       },
+      {
+        icon: <FaFacebookMessenger />,
+        label: "Chat",
+        href: "/dashboard/list/chats",
+        visible: ["admin", "staff", "family", "resident"],
+      },
     ],
   },
   {
@@ -96,7 +103,7 @@ export default function Menu() {
   const { user, loading } = useCurrentUser();
   // Access the role from user_metadata since that's where it's set in your sign-up
   const role = user ? (user.user_metadata?.role || "guest").toLowerCase() : "guest";
-
+ 
   if (loading) return <div>Loading menu...</div>;
 
   return (

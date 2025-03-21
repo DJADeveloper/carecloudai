@@ -11,13 +11,14 @@ import FormContainer from "@/components/FormContainer";
 import { ITEM_PER_PAGE } from "@/app/lib/settings";
 import { FaFilter, FaSort, FaEye, FaUserAlt } from "react-icons/fa";
 import FormModal from "@/components/FormModal";
-import Navbar from "@/components/Navbar";
+import { useCurrentUser } from "@/context/UserContext";
+import { listResidents } from "@/app/lib/actions/resident";
 
 export default function ResidentListPage() {
   const [data, setData] = React.useState([]);
   const [count, setCount] = React.useState(0);
   const [loading, setLoading] = React.useState(true);
-  const [role, setRole] = React.useState("guest");
+  const { user, loading: userLoading } = useCurrentUser();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -25,47 +26,73 @@ export default function ResidentListPage() {
   const searchTerm = searchParams.get("search") || "";
 
   React.useEffect(() => {
-    setRole("admin"); 
-  }, []);
+    let mounted = true;
 
-  React.useEffect(() => {
-    async function fetchResidents() {
-      setLoading(true);
-      let queryBuilder = supabase
-        .from("residents")
-        .select(
-          `
-            id,
-            fullname,
-            phone,
-            address,
-            carelevel,
-            dateofbirth,
-            img,
-            bloodtype
-          `,
-          { count: "exact" }
-        );
-      if (searchTerm) {
-        queryBuilder = queryBuilder.ilike("fullname", `%${searchTerm}%`);
+    const fetchResidents = async () => {
+      if (userLoading || !user) {
+        if (!userLoading && !user) setLoading(false);
+        return;
       }
-      const start = (pageParam - 1) * ITEM_PER_PAGE;
-      const end = start + ITEM_PER_PAGE - 1;
-      queryBuilder = queryBuilder.range(start, end);
-      const { data: fetchedData, error, count: fetchedCount } = await queryBuilder;
-      if (error) {
-        console.error("Error fetching residents:", error.message);
-        setData([]);
-        setCount(0);
-      } else {
-        setData(fetchedData || []);
-        setCount(fetchedCount || 0);
+
+      try {
+        console.log("🔍 Starting resident fetch");
+        const filters = searchTerm ? { fullname: searchTerm } : {};
+        const range = {
+          start: (pageParam - 1) * ITEM_PER_PAGE,
+          end: (pageParam * ITEM_PER_PAGE) - 1
+        };
+
+        const response = await listResidents(filters, range);
+        console.log("📥 Received response:", response);
+
+        if (!mounted) return;
+
+        if (response.error) {
+          console.error("❌ Error in response:", response.error);
+          setData([]);
+          setCount(0);
+        } else {
+          console.log("✅ Setting data:", {
+            records: response.data?.length,
+            total: response.count
+          });
+          setData(response.data || []);
+          setCount(response.count || 0);
+        }
+      } catch (error) {
+        console.error("❌ Fetch error:", error);
+        if (mounted) {
+          setData([]);
+          setCount(0);
+        }
+      } finally {
+        if (mounted) {
+          console.log("🏁 Setting loading to false");
+          setLoading(false);
+        }
       }
-      setLoading(false);
-    }
+    };
+
+    console.log("🚀 Effect triggered:", { userLoading, hasUser: !!user });
     fetchResidents();
-  }, [pageParam, searchTerm]);
 
+    return () => {
+      mounted = false;
+      console.log("♻️ Cleanup: component unmounted");
+    };
+  }, [pageParam, searchTerm, user, userLoading]);
+
+  // Debugging render
+  console.log("🎨 Render:", { 
+    loading, 
+    userLoading, 
+    hasUser: !!user, 
+    dataLength: data.length,
+    pageParam,
+    searchTerm 
+  });
+
+  // Define Table Columns
   const columns = [
     {
       header: "Info",
@@ -91,17 +118,15 @@ export default function ResidentListPage() {
       accessor: "bloodtype",
       className: "hidden lg:table-cell",
     },
-    ...(role === "admin"
-      ? [
-          {
-            header: "Actions",
-            accessor: "action",
-          },
-        ]
-      : []),
+    ...(user ? [
+      {
+        header: "Actions",
+        accessor: "action",
+      },
+    ] : []),
   ];
 
-  // Update renderRow so the entire row is clickable
+  // Render each Table Row
   const renderRow = (resident) => (
     <tr
       key={resident.id}
@@ -121,7 +146,7 @@ export default function ResidentListPage() {
           </div>
         )}
         <div className="flex flex-col">
-          <h3 className="font-semibold">{resident.fullname}</h3>
+          <h3 className="font-semibold text-gray-800">{resident.fullname}</h3>
           <p className="text-xs text-gray-500">
             {resident.dateofbirth
               ? new Intl.DateTimeFormat("en-GB").format(new Date(resident.dateofbirth))
@@ -133,15 +158,15 @@ export default function ResidentListPage() {
       <td className="hidden lg:table-cell">{resident.phone}</td>
       <td className="hidden lg:table-cell">{resident.address || "No Address"}</td>
       <td className="hidden lg:table-cell">{resident.bloodtype || "N/A"}</td>
-      {role === "admin" && (
+      {user && (
         <td onClick={(e) => e.stopPropagation()}>
           <div className="flex items-center gap-2">
             <button
               onClick={(e) => {
                 e.stopPropagation();
-                router.push(`/list/residents/${resident.id}`);
+                router.push(`/dashboard/list/residents/${resident.id}`);
               }}
-              className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky"
+              className="w-7 h-7 flex items-center justify-center rounded-full bg-lamaSky hover:opacity-90 transition"
             >
               <FaEye className="text-white" />
             </button>
@@ -152,36 +177,53 @@ export default function ResidentListPage() {
     </tr>
   );
 
+  if (!user && !userLoading) {
+    return <div className="p-4 text-gray-600">Please log in to view residents.</div>;
+  }
+
   if (loading) {
-    return <div className="p-4">Loading Residents...</div>;
+    return <div className="p-4 text-gray-600">Loading Residents...</div>;
   }
 
   return (
     <>
-    <Navbar />
-    <div className="bg-white p-4 rounded-md flex-1 m-4 mt-0">
-      <div className="flex items-center justify-between">
-        <h1 className="hidden md:block text-lg font-semibold">All Residents</h1>
-        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
-          <TableSearch />
-          <div className="flex items-center gap-4 self-end">
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow text-gray-700">
-              <FaFilter size={14} />
-            </button>
-            <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow text-gray-700">
-              <FaSort size={14} />
-            </button>
-            {role === "admin" && (
-              <FormContainer table="resident" type="create" />
-            )}
+      <div className="m-4 mt-0">
+        <div className="bg-white shadow rounded-md p-4 flex-1">
+          {/* Header */}
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-4">
+            <h1 className="text-lg font-semibold text-gray-800">
+              All Residents ({count})
+            </h1>
+            <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+              {/* Search */}
+              <TableSearch />
+              {/* Filter/Sort/Create */}
+              <div className="flex items-center gap-2">
+                <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow text-gray-700 hover:opacity-90 transition">
+                  <FaFilter size={14} />
+                </button>
+                <button className="w-8 h-8 flex items-center justify-center rounded-full bg-lamaYellow text-gray-700 hover:opacity-90 transition">
+                  <FaSort size={14} />
+                </button>
+                {user && (
+                  <FormContainer table="resident" type="create" />
+                )}
+              </div>
+            </div>
           </div>
+
+          {data.length === 0 ? (
+            <div className="text-center py-4 text-gray-500">
+              No residents found.
+            </div>
+          ) : (
+            <>
+              <Table columns={columns} renderRow={renderRow} data={data} />
+              <Pagination page={pageParam} count={count} />
+            </>
+          )}
         </div>
       </div>
-      <Table columns={columns} renderRow={renderRow} data={data} />
-      <Pagination page={pageParam} count={count} />
-      <FormModal />
-    </div>
     </>
   );
 }
-

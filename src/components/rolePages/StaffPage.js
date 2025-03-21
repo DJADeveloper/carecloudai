@@ -1,34 +1,69 @@
-// src/app/dashboard/staff/page.js
 "use client";
 
-import { useCurrentUser } from "@/hooks/useCurrentUser";
+import React, { useState, useEffect } from "react";
+import UserCard from "@/components/UserCard";
+import CountChartContainer from "@/components/CountChartContainer";
+import BarChartContainer from "@/components/BarChartContainer";
+import EventCalendarContainer from "@/components/EventCalendarContainer";
+import QuickActions from "@/components/QuickActions";
+import RecentActivity from "@/components/RecentActivity";
+import { FiMoreVertical } from "react-icons/fi";
+import AlertsBanner from "@/components/AlertsBanner";
+import TodoList from "@/components/TodoList";
 
-
-// import Announcements from "@/components/Announcements";
-// import BigCalendarContainer from "@/components/BigCalendarContainer";
-
-
-export default function StaffPage() {
-  const { user, loading } = useCurrentUser();
-  
-  if (loading) return <div>Loading...</div>;
-  const userId = user ? user.id : null;
-
+export default function StaffDashboard({ searchParams }) {
   return (
-    
-    <div className="flex-1 p-4 flex gap-4 flex-col xl:flex-row">
-      {/* LEFT */}
-      <div className="w-full xl:w-2/3">
-        <div className="h-full bg-white p-4 rounded-md">
-          <h1 className="text-xl font-semibold">Staff Schedule</h1>
-          {/* <BigCalendarContainer type="staffId" id={userId} /> */}
+    <div className="bg-gray-50 min-h-screen p-6">
+      {/* Alerts */}
+      <AlertsBanner />
+
+      {/* Assigned Residents & Tasks */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="md:col-span-2 bg-white rounded shadow p-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Assigned Residents</h2>
+          <CountChartContainer />
+        </div>
+        <div className="bg-white rounded shadow p-4">
+          <div className="mb-6">
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">Quick Actions</h2>
+            <QuickActions />
+          </div>
+          <div>
+            <h2 className="text-lg font-semibold mb-4 text-gray-800">To-Do List</h2>
+            <TodoList />
+          </div>
         </div>
       </div>
-      {/* RIGHT */}
-      <div className="w-full xl:w-1/3 flex flex-col gap-8">
-        {/* <Announcements /> */}
+
+      {/* Daily / Weekly Schedule */}
+      <div className="bg-white p-4 rounded shadow mb-6">
+        <h2 className="text-lg font-semibold mb-4 text-gray-800">My Schedule</h2>
+        <EventCalendarContainer searchParams={searchParams} />
+      </div>
+
+      {/* Trends & Analytics */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div className="bg-white rounded shadow p-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Resident Trends</h2>
+          <CountChartContainer />
+        </div>
+        <div className="bg-white rounded shadow p-4">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Care Task Analysis</h2>
+          <BarChartContainer />
+        </div>
+      </div>
+
+      {/* Communication & Alerts */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Recent Activity</h2>
+          <RecentActivity />
+        </div>
+        <div className="bg-white p-4 rounded shadow">
+          <h2 className="text-lg font-semibold mb-4 text-gray-800">Upcoming Events</h2>
+          <EventCalendarContainer searchParams={searchParams} />
+        </div>
       </div>
     </div>
-    
   );
 }
